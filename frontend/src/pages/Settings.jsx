@@ -81,7 +81,8 @@ function MinimalNetwork3D({ dark }) {
     init();
     return () => { cancelAnimationFrame(animId); if(renderer) renderer.dispose(); };
   }, [dark]);
-  return <div ref={mountRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }} />;
+  // ← Only change: added className="network-3d-bg" for mobile CSS targeting
+  return <div ref={mountRef} className="network-3d-bg" style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }} />;
 }
 
 function InputField({label,value,onChange,type='text',placeholder,hint}){
@@ -491,6 +492,105 @@ export default function Settings(){
         .btn-solid:hover:not(:disabled) { transform: scale(0.98); background: ${dark ? '#E5E5E5' : '#333333'} !important; }
         .btn-ghost:hover:not(:disabled) { background: ${C.surfaceL} !important; border-color: ${C.textM} !important; }
         ::-webkit-scrollbar { display: none; }
+
+        /* ── MOBILE RESPONSIVE ── */
+
+        /* Tablet: 768px and below */
+        @media (max-width: 768px) {
+          /* Hide the 3D network background on mobile (performance + visual clarity) */
+          .network-3d-bg { display: none !important; }
+
+          /* Main content: remove sidebar offset, take full width */
+          .main-content {
+            margin-left: 0 !important;
+            width: 100% !important;
+          }
+
+          /* Header: reduce horizontal padding */
+          .dash-header {
+            padding: 0 20px !important;
+            height: 64px !important;
+          }
+
+          /* Main content area: reduce padding */
+          .main-content > main {
+            padding: 24px 16px !important;
+            max-width: 100% !important;
+          }
+
+          /* Cards: reduce padding for small screens */
+          .bento {
+            padding: 20px !important;
+            border-radius: 16px !important;
+          }
+
+          /* Profile grid: stack to single column on mobile */
+          .bento > div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+          }
+
+          /* Name edit row: stack vertically */
+          .bento form[style*="flex-end"] {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .bento form[style*="flex-end"] button {
+            margin-bottom: 0 !important;
+          }
+
+          /* Modify Identity button row: stack on small screens */
+          .bento > div[style*="align-items: center"][style*="gap: 16"] {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+
+          /* Toast: full-width bottom bar on mobile */
+          .fade-in[style*="bottom: 32px"] {
+            bottom: 16px !important;
+            right: 16px !important;
+            left: 16px !important;
+          }
+        }
+
+        /* Small phones: 480px and below */
+        @media (max-width: 480px) {
+          .dash-header {
+            padding: 0 16px !important;
+          }
+
+          .main-content > main {
+            padding: 16px 12px !important;
+          }
+
+          .bento {
+            padding: 16px !important;
+            border-radius: 14px !important;
+          }
+
+          /* Gmail action buttons: stack vertically */
+          div[style*="display:'flex'"][style*="gap:12"][style*="flexWrap:'wrap'"] {
+            flex-direction: column !important;
+          }
+
+          /* Document vault rows: stack icon+label above button */
+          .bento div[style*="justify-content: space-between"][style*="flexWrap: wrap"] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+          }
+
+          /* Danger zone: reduce padding */
+          div[style*="border-radius:24px"][style*="padding:'32px'"] {
+            padding: 20px !important;
+            border-radius: 14px !important;
+          }
+        }
+
+        /* Landscape phones */
+        @media (max-width: 896px) and (orientation: landscape) {
+          .network-3d-bg { display: none !important; }
+          .main-content { margin-left: 0 !important; }
+          .main-content > main { padding: 20px 24px !important; }
+        }
       `}</style>
     </div>
   );
