@@ -1,0 +1,37 @@
+{
+  "google_cse": {
+    "used": 0,
+    "remaining": 1000,
+    "reset_date": "2026-03-15"
+  },
+  "hunter": {
+    "used": 5,
+    "remaining": 45,
+    "reset_date": "2026-03-14"
+  },
+  "groq": {
+    "used": 0,
+    "remaining": 14400,
+    "reset_date": "2026-03-15"
+  },
+  "snov": {
+    "used": 0,
+    "remaining": 50,
+    "reset_date": "2026-03-14"
+  },
+  "apollo": {
+    "used": 0,
+    "remaining": 75,
+    "reset_date": "2026-03-14"
+  },
+  "apify": {
+    "used": 0,
+    "remaining": 100,
+    "reset_date": "2026-03-14"
+  },
+  "rocketreach": {
+    "used": 0,
+    "remaining": 3,
+    "reset_date": "2026-03-14"
+  }
+}

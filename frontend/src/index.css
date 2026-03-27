@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base reset ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+@layer base {
+  html {
+    zoom: 1;
+    /* REMOVED: background-color: #030303 — was forcing dark bg in light mode */
+    @apply antialiased;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    /* REMOVED: @apply bg-[#030303] text-white — was overriding React dark/light theme */
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* ── Custom utility classes ── */
+@layer components {
+
+  /* Cards */
+  .card {
+    @apply bg-white border border-slate-200 rounded-2xl shadow-card;
+  }
+  .card-hover {
+    @apply transition-all duration-150 hover:shadow-card-hover hover:-translate-y-px;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-primary-600 text-white
+           px-4 py-2.5 rounded-xl font-semibold text-sm
+           hover:bg-primary-700 transition-colors duration-150
+           shadow-sm cursor-pointer border-none;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 bg-white text-slate-700
+           px-4 py-2.5 rounded-xl font-semibold text-sm
+           border border-slate-200 hover:bg-slate-50
+           transition-colors duration-150 cursor-pointer;
+  }
+  .btn-danger {
+    @apply inline-flex items-center gap-2 bg-red-500 text-white
+           px-4 py-2.5 rounded-xl font-semibold text-sm
+           hover:bg-red-600 transition-colors duration-150 cursor-pointer border-none;
+  }
+
+  /* Form inputs */
+  .input {
+    @apply w-full bg-white border border-slate-200 rounded-xl
+           px-4 py-2.5 text-sm text-slate-800
+           focus:outline-none focus:border-primary-500
+           focus:ring-2 focus:ring-primary-500/10
+           placeholder-slate-400 transition-all duration-150;
+  }
+  .label {
+    @apply block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold;
+  }
+  .badge-applied   { @apply bg-slate-100 text-slate-600; }
+  .badge-interview { @apply bg-blue-100 text-blue-700; }
+  .badge-offer     { @apply bg-green-100 text-green-700; }
+  .badge-rejected  { @apply bg-red-100 text-red-600; }
+
+  /* Sidebar */
+  .nav-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl
+           text-slate-400 font-medium text-sm
+           hover:bg-white/5 hover:text-white
+           transition-all duration-200 cursor-pointer;
+  }
+  .nav-link-active {
+    @apply bg-white/10 text-white shadow-sm font-semibold;
+  }
+
+  /* Table */
+  .tbl-header {
+    @apply text-xs font-bold text-slate-400 uppercase tracking-wider
+           px-5 py-3 text-left bg-slate-50 whitespace-nowrap;
+  }
+  .tbl-cell {
+    @apply px-5 py-4 text-sm text-slate-700 align-middle;
+  }
+  .tbl-row {
+    @apply border-b border-slate-100 hover:bg-slate-50/70
+           transition-colors duration-100 cursor-pointer;
+  }
+}
