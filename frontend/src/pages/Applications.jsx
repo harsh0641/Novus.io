@@ -1,4 +1,4 @@
-  import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
   import { useNavigate, useLocation } from 'react-router-dom';
   import { useAuth } from '../context/AuthContext';
   import { jobsAPI, applicationsAPI } from '../api/client';
@@ -143,6 +143,82 @@
     }, [dark]);
 
     return <div ref={mountRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0 }} />;
+  }
+
+  // ── AI-Powered Intelligence Summary ───────────────────────────────────────────
+  // Uses Claude API to generate job-post-specific intelligence summary (NOT company info)
+  const jobSummaryCache = new Map();
+
+  async function fetchJobIntelligenceSummary(job) {
+    const cacheKey = `summary__${job.company}__${job.title}__${(job.description || '').slice(0, 80)}`;
+    if (jobSummaryCache.has(cacheKey)) return jobSummaryCache.get(cacheKey);
+
+    try {
+      const prompt = `You are a job intelligence analyst. Based ONLY on the following job posting details, write a concise 2-3 sentence intelligence summary about THIS SPECIFIC JOB ROLE and what makes it unique. Focus on: the role itself, what the candidate will actually do, key technologies or skills required, team/project context, and growth opportunity. Do NOT write about the company in general — focus on the job post specifics. Be specific, insightful, and informative. Write in third person. Do not use bullet points.
+
+Job Title: ${job.title}
+Company: ${job.company}
+Location: ${job.location || 'Not specified'}
+Job Type: ${job.job_type || 'Not specified'}
+Salary: ${job.salary || 'Not specified'}
+Description / Requirements:
+${(job.description || job.requirements || job.ai_reqs || '').slice(0, 1200)}`;
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+
+      const data = await response.json();
+      const text = data.content?.map(c => c.text || '').join('').trim() || '';
+      jobSummaryCache.set(cacheKey, text);
+      return text;
+    } catch {
+      return '';
+    }
+  }
+
+  // ── AI-Powered Dynamic Qualifications ─────────────────────────────────────────
+  // Generates job-specific qualification labels based on the actual JD
+  const jobReqsCache = new Map();
+
+  async function fetchDynamicQualifications(job) {
+    const cacheKey = `reqs__${job.company}__${job.title}__${(job.description || '').slice(0, 80)}`;
+    if (jobReqsCache.has(cacheKey)) return jobReqsCache.get(cacheKey);
+
+    try {
+      const prompt = `You are a job requirements analyst. Based on the following job posting, extract exactly 5-7 specific, concrete qualifications or skills required for THIS role. Each qualification should be specific to the job description — not generic filler. Format: one qualification per line, no bullets, no numbers, no extra text. Keep each under 6 words. Be specific (e.g. "React 18 with hooks" not "Frontend skills").
+
+Job Title: ${job.title}
+Company: ${job.company}
+Description / Requirements:
+${(job.description || job.requirements || job.ai_reqs || '').slice(0, 1200)}
+
+Return ONLY the qualifications list, one per line, nothing else.`;
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+
+      const data = await response.json();
+      const text = data.content?.map(c => c.text || '').join('').trim() || '';
+      const reqs = text.split('\n').map(l => l.replace(/^[•\-\*\d\.]\s*/, '').trim()).filter(l => l.length > 2).slice(0, 7);
+      jobReqsCache.set(cacheKey, reqs);
+      return reqs;
+    } catch {
+      return null;
+    }
   }
 
   // ── AI-Powered Requirement Tooltip ────────────────────────────────────────────
@@ -437,6 +513,107 @@
     );
   }
 
+  // ── AI Intelligence Summary with loading state ─────────────────────────────────
+  function IntelligenceSummary({ job, dark }) {
+    const C = getC(dark);
+    const [summary, setSummary] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [fetched, setFetched] = useState(false);
+
+    useEffect(() => {
+      if (!job) return;
+      setFetched(false);
+      setSummary('');
+
+      // Check if we already have a cached clean summary from the job
+      const existingSummary = cleanSummary(job.ai_summary);
+
+      // Always try to fetch a job-post-specific summary via AI
+      const doFetch = async () => {
+        // Only show loading if we don't have an existing summary to display
+        if (!existingSummary) setLoading(true);
+        const aiSummary = await fetchJobIntelligenceSummary(job);
+        if (aiSummary) {
+          setSummary(aiSummary);
+        } else if (existingSummary) {
+          setSummary(existingSummary);
+        }
+        setLoading(false);
+        setFetched(true);
+      };
+
+      // If we have description/requirements to work with, fetch AI summary
+      if (job.description || job.requirements || job.ai_reqs || job.ai_summary) {
+        doFetch();
+      } else if (existingSummary) {
+        setSummary(existingSummary);
+        setFetched(true);
+      }
+    }, [job?.id, job?.title, job?.company]);
+
+    if (!loading && !summary) return null;
+
+    return (
+      <div style={{ marginBottom: 22, padding: '18px', background: C.surfaceLow, borderRadius: 16, border: `1px solid ${C.border}` }}>
+        <div style={{ fontSize: '0.58rem', fontWeight: 700, color: C.textL, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Intelligence Summary</div>
+        {loading && !summary ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[0, 1, 2].map(i => (
+                <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: C.blue, animation: `reqPulse 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+              ))}
+            </div>
+            <span style={{ fontSize: '0.8rem', color: C.textM, fontWeight: 300 }}>Generating role intelligence...</span>
+          </div>
+        ) : (
+          <p style={{ fontSize: '0.875rem', color: C.text, lineHeight: 1.75, margin: 0, fontWeight: 300, animation: 'skelFadeIn 0.4s ease' }}>{summary}</p>
+        )}
+      </div>
+    );
+  }
+
+  // ── AI Dynamic Qualifications ──────────────────────────────────────────────────
+  function DynamicReqTimeline({ job, dark }) {
+    const C = getC(dark);
+    const [reqs, setReqs] = useState(() => parseReqs(job?.ai_reqs || job?.requirements || ''));
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+      if (!job) return;
+      // Reset to parsed reqs immediately
+      const parsed = parseReqs(job?.ai_reqs || job?.requirements || '');
+      setReqs(parsed);
+
+      // Fetch dynamic AI-generated qualifications based on the actual JD
+      const doFetch = async () => {
+        if (!job.description && !job.requirements && !job.ai_reqs) return;
+        setLoading(true);
+        const aiReqs = await fetchDynamicQualifications(job);
+        if (aiReqs && aiReqs.length > 0) {
+          setReqs(aiReqs);
+        }
+        setLoading(false);
+      };
+
+      doFetch();
+    }, [job?.id, job?.title, job?.company]);
+
+    if (loading && reqs.length === 0) {
+      return (
+        <div style={{ paddingLeft: 24 }}>
+          {[0, 1, 2, 3, 4].map(i => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12, opacity: 0.4, animation: `skelPulse 1.5s ease ${i * 0.15}s infinite` }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: C.border, flexShrink: 0 }} />
+              <div style={{ height: 12, borderRadius: 6, background: C.border, width: `${60 + Math.random() * 40}%` }} />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <ReqTimeline reqs={reqs} dark={dark} job={job} />;
+  }
+
   // ── Job Modal ──────────────────────────────────────────────────────────────────
   function JobModal({ job, onClose, onApply, isApplied, isSaving, dark, userId }) {
     const C = getC(dark);
@@ -449,9 +626,7 @@
     if (!job) return null;
     const color = getColor(job.company || '');
     const ab = abbr(job.company || '');
-    const reqs = parseReqs(job.ai_reqs || job.requirements || '');
     const { url: applyUrl, isLinkedIn, isEasyApply } = resolveApplyUrl(job);
-    const summary = cleanSummary(job.ai_summary);
 
     return (
       <div
@@ -492,21 +667,14 @@
               ))}
             </div>
 
-            {/* AI Summary — cleaned */}
-            {summary && (
-              <div style={{ marginBottom: 22, padding: '18px', background: C.surfaceLow, borderRadius: 16, border: `1px solid ${C.border}` }}>
-                <div style={{ fontSize: '0.58rem', fontWeight: 700, color: C.textL, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 10 }}>Intelligence Summary</div>
-                <p style={{ fontSize: '0.875rem', color: C.text, lineHeight: 1.75, margin: 0, fontWeight: 300 }}>{summary}</p>
-              </div>
-            )}
+            {/* AI Intelligence Summary — job-post specific, NOT company info */}
+            <IntelligenceSummary job={job} dark={dark} />
 
-            {/* Requirements — AI powered tooltips */}
-            {reqs.length > 0 && (
-              <div style={{ marginBottom: 28 }}>
-                <div style={{ fontSize: '0.58rem', fontWeight: 700, color: C.textL, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Key Qualifications</div>
-                <ReqTimeline reqs={reqs} dark={dark} job={job} />
-              </div>
-            )}
+            {/* Requirements — AI powered dynamic qualifications + tooltips */}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: '0.58rem', fontWeight: 700, color: C.textL, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Key Qualifications</div>
+              <DynamicReqTimeline job={job} dark={dark} />
+            </div>
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -691,23 +859,22 @@
       <div style={{ display: 'flex', minHeight: '100vh', background: C.bg, transition: 'background 0.4s cubic-bezier(0.16,1,0.3,1)', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
         <MinimalNetwork3D dark={dark} />
 
-        {/* Mobile sidebar overlay */}
+        {/* Mobile sidebar overlay — matches Dashboard pattern exactly */}
         {sidebarOpen && (
           <div
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 45, display: 'none' }}
-            className="mobile-overlay"
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 45 }}
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        <Sidebar />
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', zIndex: 10, marginLeft: 'var(--sidebar-width, 280px)', transition: 'margin-left 0.5s cubic-bezier(0.16, 1, 0.3, 1)' }} className="main-content">
 
           {/* ── TOP BAR ─────────────────────────────────────────────────────── */}
           <header style={{ position: 'sticky', top: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', background: dark ? 'rgba(3,3,3,0.75)' : 'rgba(244,244,245,0.85)', backdropFilter: 'blur(24px) saturate(180%)', borderBottom: `1px solid ${C.border}`, WebkitBackdropFilter: 'blur(24px) saturate(180%)', gap: 16 }}>
 
-            {/* Mobile hamburger */}
+            {/* Mobile hamburger — same as Dashboard */}
             <button
               className="mobile-only"
               onClick={() => setSidebarOpen(v => !v)}
