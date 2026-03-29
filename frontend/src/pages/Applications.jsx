@@ -152,26 +152,24 @@ async function fetchReqExplanation(req, jobTitle, company, jobDescription) {
   const cacheKey = `${company}__${jobTitle}__${req}`;
   if (reqExplanationCache.has(cacheKey)) return reqExplanationCache.get(cacheKey);
 
-  try {
+ try {
     const prompt = `You are a career advisor. For the job role "${jobTitle}" at "${company}", explain in exactly 1-2 concise sentences why this specific requirement matters for THIS role: "${req}". Be specific to the company/role context. Do not use bullet points. Keep it under 30 words. Company context: ${(jobDescription || '').slice(0, 300)}`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'x-api-key': process.env.REACT_APP_ANTHROPIC_API_KEY || '',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerously-allow-browser': 'true'
+        'Authorization': `Bearer ${process.env.REACT_APP_GROQ_API_KEY || ''}`
       },
       body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
+        model: 'llama-3.1-8b-instant', // Standard Groq Llama model
         max_tokens: 150,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
 
     const data = await response.json();
-    const text = data.content?.map(c => c.text || '').join('').trim() || 'Key skill the employer is looking for in this role.';
+    const text = data.choices?.[0]?.message?.content?.trim() || 'Key skill the employer is looking for in this role.';
     reqExplanationCache.set(cacheKey, text);
     return text;
   } catch {
@@ -468,24 +466,24 @@ function JobModal({ job, onClose, onApply, isApplied, isSaving, dark, userId }) 
     if (sumFetched.current || !job.description) return;
     sumFetched.current = true;
     setLoadingSum(true);
-    try {
+  try {
       const prompt = `Analyze this job description for the role of ${job.title}. Extract the core role, exact tech stack/tools, and primary responsibilities. Focus strictly on the role itself, NOT the company background. Be extremely concise (2-3 sentences). JD: ${(job.description || '').slice(0, 1500)}`;
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': process.env.REACT_APP_ANTHROPIC_API_KEY || '',
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerously-allow-browser': 'true'
+          'Authorization': `Bearer ${process.env.REACT_APP_GROQ_API_KEY || ''}`
         },
         body: JSON.stringify({
-          model: 'claude-3-haiku-20240307',
+          model: 'llama-3.1-8b-instant',
           max_tokens: 200,
           messages: [{ role: 'user', content: prompt }]
         })
       });
+      
       const data = await response.json();
-      const text = data.content?.[0]?.text;
+      const text = data.choices?.[0]?.message?.content;
       if (text) setDynamicSummary(text.trim());
     } catch (e) {
       console.error(e);
