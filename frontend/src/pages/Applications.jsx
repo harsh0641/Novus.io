@@ -158,7 +158,7 @@ async function fetchJobIntelligence(job) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.REACT_APP_GROQ_API_KEY}`,
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
@@ -194,7 +194,7 @@ async function fetchHoverInsight(job) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.REACT_APP_GROQ_API_KEY}`,
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
