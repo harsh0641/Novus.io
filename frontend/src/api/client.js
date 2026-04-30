@@ -13,9 +13,10 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── Axios instance ────────────────────────────────────────────────────────────
 const API = axios.create({
-  baseURL: 'https://novus-backend-ujgc.onrender.com',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
   headers: { 'Content-Type': 'application/json' },
 });
+
 
 // ── Auth token injector ───────────────────────────────────────────────────────
 API.interceptors.request.use((config) => {

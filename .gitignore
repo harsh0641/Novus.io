@@ -6,3 +6,6 @@ app.py
 requirements.txt
 pages/
 CREDITS_PANEL_SNIPPET.py
+
+__pycache__/
+*.pyc
