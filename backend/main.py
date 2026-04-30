@@ -45,7 +45,7 @@ app = FastAPI(title="CareerSync API", version="1.0.0")
 origins = [
     "http://localhost:3000",
     "http://localhost:5173",
-    "https://novusio.vercel.app",
+    "https://novusio.vercel.app",  # <--- FIXED: Live Vercel Frontend
 ]
 
 env_origins = os.getenv("ALLOWED_ORIGINS")
