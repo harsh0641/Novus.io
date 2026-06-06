@@ -1,8 +1,5 @@
-# Novus — AI-Driven Job Application & Market Intelligence Platform
+# Novus AI-Driven Job Application & Market Intelligence Platform
 
-> CIS 600 Master's Project — University of Massachusetts Dartmouth  
-> Harsh Hetalkumar Vora · Student ID: 02175306  
-> Advisor: Prof. Dr. Yuchou Chang
 
 ---
 
