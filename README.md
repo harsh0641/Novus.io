@@ -358,7 +358,7 @@ Groq's LPU inference engine runs Llama 3.1 8B at approximately 280 tokens/second
 
 **Harsh Hetalkumar Vora**  
 M.S. Computer Science — University of Massachusetts Dartmouth  
-[LinkedIn](https://www.linkedin.com/in/harshvora) · [GitHub](https://github.com/yourusername)
+[LinkedIn](https://www.linkedin.com/in/harshvora14) · [GitHub](https://github.com/harsh0641)
 
 ---
 
